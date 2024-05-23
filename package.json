@@ -1,6 +1,6 @@
 {
   "name": "com.lenix.serialized-method",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "displayName": "Serialized Method",
   "description": "Expose your script's methods on the inspector to test them at any moment at a press of a button",
   "unity": "2022.3",
