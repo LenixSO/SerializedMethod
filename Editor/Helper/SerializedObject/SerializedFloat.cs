@@ -11,7 +11,7 @@ namespace SerializableMethods
         public VisualElement GetElement(string label, object value, Type type, Action<object> onValueChanged)
         {
             FloatField field = new FloatField(label);
-            field.value = (float)Convert.ToDecimal(value);
+            field.value = value == null ? default : (float)Convert.ToDecimal(value);
             field.RegisterCallback<ChangeEvent<float>>(evt => onValueChanged?.Invoke(evt.newValue));
             return field;
             //returnObject = EditorGUILayout.FloatField(label, (float)returnObject, width);

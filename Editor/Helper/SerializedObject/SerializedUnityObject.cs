@@ -11,7 +11,7 @@ namespace SerializableMethods
         {
             ObjectField field = new ObjectField(label);
             field.objectType = type;
-            field.value = (UnityEngine.Object)value;
+            field.value = value == null ? default : (UnityEngine.Object)value;
             field.RegisterCallback<ChangeEvent<Object>>((evt) => onValueChanged?.Invoke(evt.newValue));
             return field;
         }

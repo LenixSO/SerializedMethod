@@ -11,7 +11,7 @@ namespace SerializableMethods
         public VisualElement GetElement(string label, object value, Type type, Action<object> onValueChanged)
         {
             IntegerField field = new IntegerField(label);
-            field.value = (int)value;
+            field.value = value == null ? default : (int)value;
             field.RegisterCallback<ChangeEvent<int>>(evt => onValueChanged?.Invoke(evt.newValue));
             return field;
         }

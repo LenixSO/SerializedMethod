@@ -11,8 +11,7 @@ namespace SerializableMethods
         {
             value = value == null ? string.Empty : value;
             TextField field = new TextField(label);
-            field.value = value.ToString();
-            //methodParameters[key] = field.value;
+            field.value = value == null ? default : value.ToString();
             field.RegisterCallback<ChangeEvent<string>>(evt => onValueChanged?.Invoke(evt.newValue));
             return field;
         }
