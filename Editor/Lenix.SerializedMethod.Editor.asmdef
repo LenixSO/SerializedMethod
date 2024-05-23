@@ -1,0 +1,16 @@
+{
+    "name": "Lenix.SerializedMethod.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:53b2f0fbd7036ed449881803aff0b9fe"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
