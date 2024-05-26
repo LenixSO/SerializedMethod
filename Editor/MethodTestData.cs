@@ -30,12 +30,6 @@ namespace SerializableMethods
             //Debug.Log(Directory.GetFiles(path).Length);
         }
 
-        private async Task SaveChanges()
-        {
-            await Task.Delay(400);
-            Save();
-        }
-
         Dictionary<string, object> Load()
         {
             Dictionary<string, object> data = new();
@@ -51,7 +45,7 @@ namespace SerializableMethods
                 return data;
             }
 
-            Debug.LogError("não encontrado");
+            Debug.LogWarning("Saved data not found");
             return data;
         }
 
@@ -67,7 +61,7 @@ namespace SerializableMethods
                         object value = JsonUtility.FromJson<ObjectID>((string)item.Value).ToObject();
                         returnData.Add(item.Key, value);
                     }
-                    catch (Exception e)
+                    catch
                     {
                         object value = item.Value;
                         if (item.Value.GetType() == typeof(object[]))
@@ -89,8 +83,10 @@ namespace SerializableMethods
 
         public void Save()
         {
-            List<Type> knownTypes = new();
-            knownTypes.Add(typeof(List<object>));
+            List<Type> knownTypes = new()
+            {
+                typeof(List<object>)
+            };
             DataContractJsonSerializer son = new DataContractJsonSerializer(typeof(Dictionary<string, object>), knownTypes);
             //Debug.Log(filePath);
             FileStream file = new FileStream(filePath, FileMode.Create);
@@ -110,7 +106,7 @@ namespace SerializableMethods
                         returnType.Add(item.Key, JsonUtility.ToJson(new ObjectID((UnityEngine.Object)item.Value)));
                     else returnType.Add(item.Key, item.Value);
                 }
-                catch (Exception e)
+                catch
                 {
                     //Debug.Log($"is {item.Key}({item.Value.GetType()}) serializable? {item.Value.GetType().IsSerializable}");
                     object value = item.Value != null ? item.Value : null;

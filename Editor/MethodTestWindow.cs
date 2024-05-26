@@ -71,6 +71,13 @@ namespace SerializableMethods
         {
             VisualElement area = rootVisualElement.Q(PickClassLabel);
             area.Clear();
+            if (evt.newValue == null)
+            {
+                target = null;
+                classChoice = -1;
+                rootVisualElement.Q(MethodAreaName)?.Clear();
+                return;
+            }
             if (evt.newValue.GetType() != typeof(GameObject) || evt.newValue == null)
             {
                 target = null;
@@ -110,6 +117,13 @@ namespace SerializableMethods
             MethodInfo[] methods = SerializeMethodHelper.GetMethods(targetClass);
             VisualElement methodsArea = rootVisualElement.Q(MethodAreaName);
             methodsArea.Clear();
+
+            VisualElement scroll = new ScrollView(ScrollViewMode.Vertical);
+            scroll.contentContainer.style.flexDirection = FlexDirection.Row;
+            scroll.contentContainer.style.flexWrap = Wrap.Wrap;
+
+            methodsArea.Add(scroll);
+            methodsArea = scroll.contentContainer;
             foreach (MethodInfo method in methods)
             {
                 SerializeMethodHelper.ShowMethod(target, method, methodsArea);

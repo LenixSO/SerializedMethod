@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 
 public static class StructSerializer
@@ -30,7 +31,17 @@ public static class StructSerializer
         Type valueType = Type.GetType(data[0].ToString());
         object returnValue = default;
 
-        //Debug.Log($"deserialized type is {valueType}");
+        try
+        {
+            returnValue = Activator.CreateInstance(valueType);
+        }
+        catch
+        {
+            UnityEngine.Debug.LogWarning($"Could not create instance of ({valueType}), this type does not have a generic constructor");
+            return default;
+        }
+
+        //UnityEngine.Debug.Log($"deserialized type is {valueType} - {returnValue}");
         
         FieldInfo[] fields = valueType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         for (int i = 0; i < fields.Length; i++)
