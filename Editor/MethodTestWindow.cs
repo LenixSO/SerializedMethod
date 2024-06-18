@@ -21,11 +21,11 @@ namespace SerializableMethods
         private GameObject target = null;
         private int classChoice = -1;
 
-        [MenuItem("Tools/MethodTesting")]
+        [MenuItem("Tools/MethodTest")]
         public static void ShowWindow()
         {
             MethodTestWindow window = GetWindow<MethodTestWindow>();
-            window.titleContent = new GUIContent("MethodTesting");
+            window.titleContent = new GUIContent("MethodTest");
         }
 
         public void CreateGUI()

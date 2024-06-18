@@ -5,32 +5,69 @@ using System.Text;
 
 public class CreateCustomSerialization : EditorWindow
 {
+    private const string className = "$1";
+    private static string template;
 
-    [MenuItem("Assets/SerializedMethod/Create Custom SerializedParameter")]
-    static void CreateScript()
+    private static bool editing = false;
+    private static bool added = false;
+
+    private static string ScriptTemplate
     {
-        string filePath = EditorUtility.SaveFilePanel("PickLocation", "Assets", "", "cs");
-        string fileName = filePath.Substring(filePath.LastIndexOf("/") + 1);
-        fileName = fileName.Remove(fileName.LastIndexOf('.'));
+        get
+        {
+            if (string.IsNullOrEmpty(template))
+            {
+                template = "using System;\n";
+                template += "using SerializableMethods;\n";
+                template += "using UnityEditor.UIElements;\n";
+                template += "using UnityEngine.UIElements;";
+                template += "\n\n//A Custom Serialized Object must be in the Resources Folder to be detected";
+                template += $"\npublic class {className} : ISerializedObject";
+                template += "\n{";
+                template += $"\n   public {className}(){{ }}";
+                template += "\n   public Type[] usedTypes => new [] { typeof(object)/*change this to your desired type*/ };";
+                template += "\n   public VisualElement GetElement(string label, object value, Type type, Action<object> onValueChanged)\n   {";
+                template += "\n       //A simple example of an integer custom serialization:";
+                template += "\n       /*";
+                template += "\n       IntegerField field = new IntegerField(label);";
+                template += "\n       field.value = value == null ? default : (int)value;";
+                template += "\n       field.RegisterCallback<ChangeEvent<int>>(evt => onValueChanged?.Invoke(evt.newValue));";
+                template += "\n       return field;";
+                template += "\n       */";
+                template += "\n       ";
+                template += "\n       return new VisualElement();";
+                template += "\n   }";
+                template += "\n}";
+            }
 
-        Debug.Log($"{filePath}\n{fileName}");
-        FileStream file = new FileStream(filePath, FileMode.Create);
-        AddText(file, "using System;\nusing SerializableMethods;\nusing UnityEditor.UIElements;\nusing UnityEngine.UIElements;");
-        AddText(file, "\n\n//A Custom Serialized Object must be in the Resources Folder to be detected");
-        AddText(file, $"\npublic class {fileName} : ISerializedObject");
-        AddText(file, "\n{");
-        AddText(file, "\n   public Type[] usedTypes => new [] { typeof(object)/*change this to your desired type*/ };");
-        AddText(file, "\n   public VisualElement GetElement(string label, object value, Type type, Action<object> onValueChanged)\n   {");
-        AddText(file, "\n       return new VisualElement();");
-        AddText(file, "\n   }");
-        AddText(file, "\n}");
-        file.Close();
-        AssetDatabase.Refresh();
+            return template;
+        }
     }
 
-    static void AddText(FileStream file,string text)
+    [MenuItem("Assets/Create/SerializedMethod/Custom SerializedParameter")]
+    static void CreateScript()
     {
-        byte[] info = new UTF8Encoding(true).GetBytes(text);
-        file.Write(info, 0, info.Length);
+        ProjectWindowUtil.CreateAssetWithContent("newSerializedObject.cs", ScriptTemplate);
+        editing = true;
+        if (!added)
+        {
+            Selection.selectionChanged += SelectionHook;
+            added = true;
+        }
+    }
+
+    private static void SelectionHook()
+    {
+        editing = !editing;
+        if (editing && Selection.activeObject != null)
+        {
+            Selection.selectionChanged -= SelectionHook;
+            string assetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
+
+            string scriptName = Path.GetFileNameWithoutExtension(assetPath);
+            File.WriteAllText(assetPath, ScriptTemplate.Replace(className, scriptName));
+            AssetDatabase.Refresh();// <-- not strictly necessary
+            editing = false;
+        }
     }
 }

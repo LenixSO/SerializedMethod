@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
 
 namespace SerializableMethods
 {
@@ -123,7 +121,7 @@ namespace SerializableMethods
         {
             string key = ParameterKey(method, parameter);
             if (!methodParameters.ContainsKey(key)) methodParameters.Add(key, parameter.RawDefaultValue);
-            if (methodParameters[key] == null && parameter.RawDefaultValue.GetType() != typeof(DBNull)) methodParameters[key] = parameter.RawDefaultValue;
+            if (methodParameters[key] == null && !(parameter.RawDefaultValue is DBNull)) methodParameters[key] = parameter.RawDefaultValue;
 
             string label = parameter.Name;
             object returnObject = methodParameters[key];
