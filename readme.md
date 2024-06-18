@@ -33,6 +33,9 @@ This will create a template script for your serialization, with all the basics y
 
 # MethodTesting Window
 If you don't want to add the ***SerializeMethod*** attribute to all methods in a class, you can also see all non-static methods of a MonoBehaviour class using the **MethodTest** Window.
+
 ![tool](https://cdn.discordapp.com/attachments/709946849817133136/1252359710838100098/image.png?ex=6671ee5e&is=66709cde&hm=ccd822e132ae8906f20c81e51d33bbe2c115936c4244d4167f048cf121f8f930&)
+
 Just pick the *Target object(GameObject)* and the *Class(Component)* and all all non-static methods will appear in the window the same way they would using the attribute.
+
 ![window](https://cdn.discordapp.com/attachments/709946849817133136/1252362361457868901/image.png?ex=6671f0d6&is=66709f56&hm=0301d8271ab4ad840e266e896c2965abe095c0a1dae98bb70a2b5a9bbd8e6e6f&)
