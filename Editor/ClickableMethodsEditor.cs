@@ -7,13 +7,20 @@ using UnityEngine.UIElements;
 
 namespace SerializableMethods
 {
-    [CustomEditor(typeof(MonoBehaviour))]
+    [CustomEditor(typeof(MonoBehaviour),true)]
     public class ClickableMethodsEditor : Editor
     {
         private Dictionary<string, object> methodParameters = new();
 
+        public override void OnInspectorGUI()
+        {
+            Debug.Log("?");
+            base.OnInspectorGUI();
+        }
+
         public override VisualElement CreateInspectorGUI()
         {
+            Debug.Log("AA");
             VisualElement root = new();
             
             //Load fields
