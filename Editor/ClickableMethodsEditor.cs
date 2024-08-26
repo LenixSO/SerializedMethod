@@ -20,7 +20,6 @@ namespace SerializableMethods
 
         public override VisualElement CreateInspectorGUI()
         {
-            Debug.Log("AA");
             VisualElement root = new();
             
             //Load fields

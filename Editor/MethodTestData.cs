@@ -69,6 +69,10 @@ namespace SerializableMethods
                             object[] deserializedStruct = (object[])item.Value;
                             value = StructSerializer.DeserializeStruct(deserializedStruct);
                         }
+                        if (value is SerializedEnum)
+                        {
+                            value = ((SerializedEnum)value).ToEnum();
+                        }
                         returnData.Add(item.Key, value);
                         //Debug.Log($"L - {item.Key}({item.Value.GetType()}) value: {returnData[item.Key]}");
                     }
@@ -108,10 +112,17 @@ namespace SerializableMethods
                 catch
                 {
                     //Debug.Log($"is {item.Key}({item.Value.GetType()}) serializable? {item.Value.GetType().IsSerializable}");
-                    object value = item.Value != null ? item.Value : null;
-                    if (!value.GetType().IsSerializable)
+                    object value = item.Value;
+                    if (value != null)
                     {
-                        value = StructSerializer.SerializeStruct(value, value.GetType());
+                        if (value.GetType().IsEnum)
+                        {
+                            value = new SerializedEnum((Enum)value);
+                        }
+                        if (!value.GetType().IsSerializable)
+                        {
+                            value = StructSerializer.SerializeStruct(value, value.GetType());
+                        }
                     }
                     returnType.Add(item.Key, value);
                     //Debug.Log($"S - {item.Key} value: {returnType[item.Key]}");
@@ -140,5 +151,26 @@ namespace SerializableMethods
         }
 
         public Object ToObject() => EditorUtility.InstanceIDToObject(id);
+    }
+
+    public struct SerializedEnum
+    {
+        public string _value;
+        public string typeName;
+
+        public SerializedEnum(Enum value)
+        {
+            Type type = value.GetType();
+            _value = Enum.ToObject(type,value).ToString();
+            typeName = type.AssemblyQualifiedName;
+        }
+        
+        public Enum ToEnum()
+        {
+            Type type = Type.GetType(typeName);
+            object value = Enum.Parse(type, _value);
+
+            return (Enum)value;
+        }
     }
 }

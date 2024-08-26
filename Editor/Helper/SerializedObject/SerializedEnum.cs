@@ -12,6 +12,8 @@ public class SerializedEnum : ISerializedObject
    {
        EnumField field = new EnumField(label);
        field.Init((Enum)Enum.GetValues(type).GetValue(0));
+       if (value != null) field.value = (Enum)value;
+       field.RegisterCallback<ChangeEvent<Enum>>((evt) => onValueChanged?.Invoke(evt.newValue));
        return field;
    }
 }
