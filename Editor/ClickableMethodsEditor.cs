@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
@@ -12,20 +13,19 @@ namespace SerializableMethods
     {
         private Dictionary<string, object> methodParameters = new();
 
-        public override void OnInspectorGUI()
-        {
-            Debug.Log("?");
-            base.OnInspectorGUI();
-        }
-
         public override VisualElement CreateInspectorGUI()
         {
             VisualElement root = new();
-            
+
+            ObjectField classField = new ObjectField("Script");
+            classField.value = MonoScript.FromMonoBehaviour(target as MonoBehaviour);
+            classField.SetEnabled(false);
+            root.Add(classField);
+
             //Load fields
-            FieldInfo[] fields = target.GetType().GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance |
-                                                            BindingFlags.Public | BindingFlags.NonPublic);
-            //Debug.Log(fields.Length);
+            FieldInfo[] fields = GetAllFields(target.GetType());
+
+            //Debug.Log($"{target.GetType().Name} - {fields.Length}");
             for (var i = 0; i < fields.Length; i++)
             {
                 FieldInfo field = fields[i];
@@ -48,6 +48,23 @@ namespace SerializableMethods
             }
 
             return root;
+        }
+
+        private static FieldInfo[] GetAllFields(Type type)
+        {
+            List<FieldInfo> fieldList = new();
+            Stack<Type> typeStack = SerializeMethodHelper.GetInheritedTypes(type, typeof(MonoBehaviour));
+            int count = typeStack.Count;
+            for (int i = 0; i < count; i++)
+            {
+                type = typeStack.Pop();
+                FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic);
+                for (int u = 0; u < fields.Length; u++)
+                {
+                    fieldList.Add(fields[u]);
+                }
+            }
+            return fieldList.ToArray();
         }
     }
 }

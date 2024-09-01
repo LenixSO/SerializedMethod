@@ -37,7 +37,27 @@ namespace SerializableMethods
 
         public static MethodInfo[] GetMethods(Type targetClass,
             BindingFlags flags = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-        => targetClass.GetMethods(flags);
+        {
+            List<MethodInfo> methodList = new();
+            Stack<Type> typeStack = GetInheritedTypes(targetClass, typeof(MonoBehaviour));
+            int count = typeStack.Count;
+            for (int i = 0; i < count; i++)
+            {
+                targetClass = typeStack.Pop();
+                MethodInfo[] methods = targetClass.GetMethods(flags);
+                for (int u = 0; u < methods.Length; u++)
+                {
+                    MethodInfo method = methods[u];
+                    if (i < count - 1)
+                    {
+                        if (method.IsPublic || method.GetCustomAttribute<SerializeMethod>() != null)
+                            methodList.Add(method);
+                    }
+                    else methodList.Add(method);
+                }
+            }
+            return methodList.ToArray();
+        }
 
         public static string MethodKey(MethodInfo method) => method.ToString();
         public static string ParameterKey(MethodInfo method, ParameterInfo parameter) =>
@@ -180,6 +200,17 @@ namespace SerializableMethods
             {
                 KnownTypes[type] = obj;
             }
+        }
+
+        public static Stack<Type> GetInheritedTypes(Type type,Type stopAt)
+        {
+            Stack<Type> typeStack = new();
+            while (type != null && type != stopAt)
+            {
+                typeStack.Push(type);
+                type = type.BaseType;
+            }
+            return typeStack;
         }
     }
 }
