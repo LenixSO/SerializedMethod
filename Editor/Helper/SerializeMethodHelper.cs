@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
@@ -106,6 +107,7 @@ namespace SerializableMethods
             Button invokeMethod = new Button();
             string returnType = method.ReturnType != typeof(void) ? $"({method.ReturnType.Name})-" : string.Empty;
             invokeMethod.text = $"{returnType}{method.Name}";
+            bool isCoroutine = method.ReturnType == typeof(IEnumerator) || method.ReturnType.IsSubclassOf(typeof(IEnumerator));
             invokeMethod.clicked += () =>
             {
                 object[] methodParams = new object[parameters.Length];
@@ -117,22 +119,29 @@ namespace SerializableMethods
                     }
                 }
 
-                object returnValue = method.Invoke(target.GetComponent(method.ReflectedType), methodParams);
-                if (returnValue != null)
+                Component component = target.GetComponent(method.ReflectedType);
+                object returnValue = method.Invoke(component, methodParams);
+
+                if (isCoroutine)
+                {
+                    //it is a coroutine
+                    (component as MonoBehaviour).StartCoroutine((IEnumerator)returnValue);
+                }
+                else if (returnValue != null)
                 {
                     Label returnLabel = area.Q<Label>(ReturnValue);
-                    returnLabel.text = $"returned ({returnValue.GetType()})[{returnValue}]";
+                    returnLabel.text = $"returned ({method.ReturnType.Name})[{returnValue}]";
                     SetValue($"{methodKey} - Return:", returnValue);
                 }
             };
             area.Add(invokeMethod);
-            if (method.ReturnType != typeof(void))
+            if (method.ReturnType != typeof(void) && !isCoroutine)
             {
                 Label returnLabel = new Label();
                 returnLabel.name = ReturnValue;
                 string key = $"{methodKey} - Return:";
                 if (methodParameters.ContainsKey(key))
-                    returnLabel.text = $"last return: ({methodParameters[key].GetType().Name})[{methodParameters[key]}]";
+                    returnLabel.text = $"last return: ({method.ReturnType.Name})[{methodParameters[key]}]";
                 area.Add(returnLabel);
             }
         }

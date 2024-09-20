@@ -11,6 +11,8 @@ public static class StructSerializer
         data.Add(structType.AssemblyQualifiedName);
         //Debug.Log($"serializing: object of type {data[0]}");
 
+        if(structure == null) return data.ToArray();
+
         FieldInfo[] fields = structType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         for (int i = 0; i < fields.Length; i++)
         {

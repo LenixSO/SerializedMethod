@@ -103,17 +103,11 @@ namespace SerializableMethods
 
             foreach (KeyValuePair<string, object> item in methodData)
             {
-                try
+                object value = item.Value;
+                if(value != null)
                 {
-                    if (item.Value != null)
-                        returnType.Add(item.Key, JsonUtility.ToJson(new ObjectID((UnityEngine.Object)item.Value)));
-                    else returnType.Add(item.Key, item.Value);
-                }
-                catch
-                {
-                    //Debug.Log($"is {item.Key}({item.Value.GetType()}) serializable? {item.Value.GetType().IsSerializable}");
-                    object value = item.Value;
-                    if (value != null)
+                    if (item.GetType().IsSubclassOf(typeof(UnityEngine.Object))) returnType.Add(item.Key, JsonUtility.ToJson(new ObjectID((UnityEngine.Object)item.Value)));
+                    else
                     {
                         if (value.GetType().IsEnum)
                         {
@@ -123,10 +117,11 @@ namespace SerializableMethods
                         {
                             value = StructSerializer.SerializeStruct(value, value.GetType());
                         }
+
+                        returnType.Add(item.Key, value);
                     }
-                    returnType.Add(item.Key, value);
-                    //Debug.Log($"S - {item.Key} value: {returnType[item.Key]}");
                 }
+                else returnType.Add(item.Key, item.Value);
             }
             return returnType;
         }
