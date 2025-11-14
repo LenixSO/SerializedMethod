@@ -17,7 +17,7 @@ namespace SerializableMethods
         private const string MethodAreaName = "Method area";
 
         //saved values
-        MethodTestData data = new();
+        SerializeMethodData data = new();
         private GameObject target = null;
         private int classChoice = -1;
 
