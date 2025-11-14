@@ -1,0 +1,194 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using System.IO;
+using System.Runtime.Serialization.Json;
+using UnityEditor;
+using Object = UnityEngine.Object;
+
+namespace SerializableMethods
+{
+    public class SerializeMethodData
+    {
+        private string path;
+        private string filePath;
+        private Dictionary<string, object> methodData;
+        public Dictionary<string, object> methodParameters
+        {
+            get
+            {
+                if (methodData == null)
+                {
+                    try { methodData = Load(); }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"Error loading Data:\n\n{ex.Message}");
+                        DeleteSave();
+                        methodData = new();
+                    }
+                }
+                return methodData;
+            }
+        }
+
+        public SerializeMethodData()
+        {
+            path = Directory.GetCurrentDirectory() + "\\Temp\\";
+            filePath = path + "methodTestData.json";
+            //Debug.Log(Directory.GetFiles(path).Length);
+        }
+
+        Dictionary<string, object> Load()
+        {
+            Dictionary<string, object> data = new();
+            if (File.Exists(filePath))
+            {
+                DataContractJsonSerializer son = new DataContractJsonSerializer(typeof(Dictionary<string, object>));
+                FileStream file = new FileStream(filePath, FileMode.Open);
+                try
+                {
+                    file.Position = 0;
+                    data = (Dictionary<string, object>)son.ReadObject(file);
+
+                    file.Close();
+                    data = DeserializeObjects(data);
+                    return data;
+                }
+                catch (Exception ex)
+                {
+                    DeleteSave();
+                    Debug.LogError($"Error saving data:\n\n{ex.Message}");
+                }
+                finally { file.Close(); }
+            }
+
+            Debug.LogWarning("Saved data not found");
+            return data;
+        }
+
+        private Dictionary<string, object> DeserializeObjects(Dictionary<string, object> data)
+        {
+            Dictionary<string, object> returnData = new Dictionary<string, object>();
+            foreach (KeyValuePair<string, object> item in data)
+            {
+                if (item.Value != null)
+                {
+                    try
+                    {
+                        object value = JsonUtility.FromJson<ObjectID>((string)item.Value).ToObject();
+                        returnData.Add(item.Key, value);
+                    }
+                    catch
+                    {
+                        object value = item.Value;
+                        if (item.Value.GetType() == typeof(object[]))
+                        {
+                            //Debug.Log("deserialized object");
+                            object[] deserializedStruct = (object[])item.Value;
+                            value = StructSerializer.DeserializeStruct(deserializedStruct);
+                        }
+                        if (value is SerializedEnum)
+                        {
+                            value = ((SerializedEnum)value).ToEnum();
+                        }
+                        returnData.Add(item.Key, value);
+                        //Debug.Log($"L - {item.Key}({item.Value.GetType()}) value: {returnData[item.Key]}");
+                    }
+                }
+                else returnData.Add(item.Key, null);
+
+            }
+
+            return returnData;
+        }
+
+        public void Save()
+        {
+            List<Type> knownTypes = new()
+            {
+                typeof(List<object>)
+            };
+            DataContractJsonSerializer son = new DataContractJsonSerializer(typeof(Dictionary<string, object>), knownTypes);
+            //Debug.Log(filePath);
+            FileStream file = new FileStream(filePath, FileMode.Create);
+            try { son.WriteObject(file, SerializableDictionary()); }
+            catch(Exception ex)
+            {
+                DeleteSave();
+                Debug.LogError($"Error saving data:\n\n{ex.Message}");
+            }
+            finally { file.Close(); }
+        }
+
+        private Dictionary<string, object> SerializableDictionary()
+        {
+            Dictionary<string, object> returnType = new();
+
+            foreach (KeyValuePair<string, object> item in methodParameters)
+            {
+                object value = item.Value;
+                if(value != null)
+                {
+                    if (value.GetType().IsSubclassOf(typeof(UnityEngine.Object))) returnType.Add(item.Key, JsonUtility.ToJson(new ObjectID((UnityEngine.Object)item.Value)));
+                    else
+                    {
+                        if (value.GetType().IsEnum)
+                        {
+                            value = new SerializedEnum((Enum)value);
+                        }
+                        if (!value.GetType().IsSerializable)
+                        {
+                            value = StructSerializer.SerializeStruct(value, value.GetType());
+                        }
+
+                        returnType.Add(item.Key, value);
+                    }
+                }
+                else returnType.Add(item.Key, item.Value);
+            }
+            return returnType;
+        }
+
+        public void DeleteSave()
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+        }
+    }
+    [Serializable]
+    public class ObjectID
+    {
+        public int id;
+        public string name;
+        public ObjectID(Object obj)
+        {
+            id = obj.GetInstanceID();
+            name = obj.name;
+        }
+
+        public Object ToObject() => EditorUtility.InstanceIDToObject(id);
+    }
+
+    public struct SerializedEnum
+    {
+        public string _value;
+        public string typeName;
+
+        public SerializedEnum(Enum value)
+        {
+            Type type = value.GetType();
+            _value = Enum.ToObject(type,value).ToString();
+            typeName = type.AssemblyQualifiedName;
+        }
+        
+        public Enum ToEnum()
+        {
+            Type type = Type.GetType(typeName);
+            object value = Enum.Parse(type, _value);
+
+            return (Enum)value;
+        }
+    }
+}

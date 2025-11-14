@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -64,17 +65,20 @@ namespace SerializableMethods
         public static string ParameterKey(MethodInfo method, ParameterInfo parameter) =>
             $"{MethodKey(method)} - {parameter.Name}";
 
-        static MethodTestData data = new();
+        static SerializeMethodData data = new();
 
         public static Dictionary<string, object> methodParameters => data.methodParameters;
 
         private static void SetValue(string key, object value)
         {
             methodParameters[key] = value;
-            data.Save();
+            SaveData();
         }
 
-        public static void SaveData() => data.Save();
+        public static void SaveData()
+        {
+            data.Save();
+        }
 
         public static void ShowMethod(GameObject target, MethodInfo method, VisualElement methodsArea)
         {
@@ -94,6 +98,20 @@ namespace SerializableMethods
             ParameterInfo[] parameters = method.GetParameters();
             string methodKey = MethodKey(method);
 
+            VisualElement nameBG = new();
+            StringBuilder sb = new($"<b>{method.Name}(");
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if(i > 0) sb.Append(", ");
+                sb.Append(parameters[i].Name);
+            }
+            sb.Append(')');
+            Label methodName = new(sb.ToString());
+            methodName.style.fontSize = 14;
+            //methodName.enableRichText = true;
+            nameBG.Add(methodName);
+            area.Add(nameBG);
+
             if (parameters.Length > 0)
             {
                 for (int i = 0; i < parameters.Length; i++)
@@ -105,8 +123,8 @@ namespace SerializableMethods
             }
 
             Button invokeMethod = new Button();
-            string returnType = method.ReturnType != typeof(void) ? $"({method.ReturnType.Name})-" : string.Empty;
-            invokeMethod.text = $"{returnType}{method.Name}";
+            string returnType = method.ReturnType != typeof(void) ? $"(returns {method.ReturnType.Name})" : string.Empty;
+            invokeMethod.text = $"Call {returnType}";
             bool isCoroutine = method.ReturnType == typeof(IEnumerator) || method.ReturnType.IsSubclassOf(typeof(IEnumerator));
             invokeMethod.clicked += () =>
             {
@@ -149,8 +167,12 @@ namespace SerializableMethods
         public static VisualElement CreateObjectField(MethodInfo method, ParameterInfo parameter)
         {
             string key = ParameterKey(method, parameter);
-            if (!methodParameters.ContainsKey(key)) methodParameters.Add(key, parameter.RawDefaultValue);
-            if (methodParameters[key] == null && !(parameter.RawDefaultValue is DBNull)) methodParameters[key] = parameter.RawDefaultValue;
+
+            if (!methodParameters.ContainsKey(key)) 
+                methodParameters.Add(key, parameter.RawDefaultValue);
+
+            if (methodParameters[key] == null && parameter.RawDefaultValue is not DBNull) 
+                methodParameters[key] = parameter.RawDefaultValue;
 
             string label = parameter.Name;
             object returnObject = methodParameters[key];
