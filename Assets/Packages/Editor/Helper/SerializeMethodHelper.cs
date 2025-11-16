@@ -176,22 +176,26 @@ namespace SerializableMethods
 
             string label = parameter.Name;
             object returnObject = methodParameters[key];
-            
             Type type = parameter.ParameterType;
+            return GetElementFieldByType(type, label, returnObject, value => SetValue(key, value));
+        }
+
+        public static VisualElement GetElementFieldByType(Type type, string label, object value, Action<object> onChange)
+        {
             if (!KnownTypes.ContainsKey(type))
             {
                 foreach (Type t in KnownTypes.Keys)
                 {
-                    if (type.IsAssignableFrom(t) || type.IsSubclassOf(t))
+                    if (type.IsAssignableFrom(t) || type.IsSubclassOf(t) || t.IsAssignableFrom(type))
                     {
-                        return KnownTypes[t].GetElement(label, returnObject, type, value => SetValue(key, value));
+                        return KnownTypes[t].GetElement(label, value, type, onChange);
                     }
                 }
                 return new Label($"{type} is an unsupported type");
             }
-            
+
             //Debug.Log(KnownTypes[type]);
-            return KnownTypes[type].GetElement(label, returnObject, type, value => SetValue(key, value));
+            return KnownTypes[type].GetElement(label, value, type, onChange);
         }
 
         private static void LoadKnownTypes()
