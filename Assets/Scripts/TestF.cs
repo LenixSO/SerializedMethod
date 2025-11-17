@@ -8,11 +8,15 @@ public class TestF : MonoBehaviour
 {
     int deptht = 0;
     [SerializeMethod]
-    private void TestListInt(List<int> list)
+    private void TestListInt(List<bool> list)
     {
     }
     [SerializeMethod]
     private void TestArrayInt(int[] array)
+    {
+    }
+    [SerializeMethod]
+    private void TestStackInt(Queue<string> list)
     {
     }
 
