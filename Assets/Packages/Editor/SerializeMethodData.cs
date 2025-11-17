@@ -5,6 +5,8 @@ using System.IO;
 using System.Runtime.Serialization.Json;
 using UnityEditor;
 using Object = UnityEngine.Object;
+using System.Collections;
+using System.Runtime.Serialization;
 
 namespace SerializableMethods
 {
@@ -20,16 +22,19 @@ namespace SerializableMethods
                 if (methodData == null)
                 {
                     try { methodData = Load(); }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"Error loading Data:\n\n{ex.Message}");
-                        DeleteSave();
-                        methodData = new();
-                    }
+                    catch { methodData = new(); }
                 }
                 return methodData;
             }
         }
+
+
+        private readonly List<Type> knownTypes = 
+            new()
+            {
+                typeof(List<object>),
+                typeof(SerializedCollection),
+            };
 
         public SerializeMethodData()
         {
@@ -43,7 +48,7 @@ namespace SerializableMethods
             Dictionary<string, object> data = new();
             if (File.Exists(filePath))
             {
-                DataContractJsonSerializer son = new DataContractJsonSerializer(typeof(Dictionary<string, object>));
+                DataContractJsonSerializer son = new DataContractJsonSerializer(typeof(Dictionary<string, object>), knownTypes);
                 FileStream file = new FileStream(filePath, FileMode.Open);
                 try
                 {
@@ -56,8 +61,9 @@ namespace SerializableMethods
                 }
                 catch (Exception ex)
                 {
+                    Debug.LogError($"Error loading data:\n\n{ex.Message}");
+                    file.Close();
                     DeleteSave();
-                    Debug.LogError($"Error saving data:\n\n{ex.Message}");
                 }
                 finally { file.Close(); }
             }
@@ -91,6 +97,10 @@ namespace SerializableMethods
                         {
                             value = ((SerializedEnum)value).ToEnum();
                         }
+                        if (value is SerializedCollection)
+                        {
+                            value = ((SerializedCollection)value).elements;
+                        }
                         returnData.Add(item.Key, value);
                         //Debug.Log($"L - {item.Key}({item.Value.GetType()}) value: {returnData[item.Key]}");
                     }
@@ -104,18 +114,15 @@ namespace SerializableMethods
 
         public void Save()
         {
-            List<Type> knownTypes = new()
-            {
-                typeof(List<object>)
-            };
             DataContractJsonSerializer son = new DataContractJsonSerializer(typeof(Dictionary<string, object>), knownTypes);
             //Debug.Log(filePath);
             FileStream file = new FileStream(filePath, FileMode.Create);
             try { son.WriteObject(file, SerializableDictionary()); }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                DeleteSave();
                 Debug.LogError($"Error saving data:\n\n{ex.Message}");
+                file.Close();
+                DeleteSave();
             }
             finally { file.Close(); }
         }
@@ -132,19 +139,24 @@ namespace SerializableMethods
                     if (value.GetType().IsSubclassOf(typeof(UnityEngine.Object))) returnType.Add(item.Key, JsonUtility.ToJson(new ObjectID((UnityEngine.Object)item.Value)));
                     else
                     {
-                        if (value.GetType().IsEnum)
+                        Type type = value.GetType();
+                        if (type.IsEnum)
                         {
                             value = new SerializedEnum((Enum)value);
                         }
-                        if (!value.GetType().IsSerializable)
+                        if (!type.IsSerializable)
                         {
                             value = StructSerializer.SerializeStruct(value, value.GetType());
+                        }
+                        if (typeof(IEnumerable).IsAssignableFrom(type))
+                        {
+                            value = new SerializedCollection(value as IEnumerable);
                         }
 
                         returnType.Add(item.Key, value);
                     }
                 }
-                else returnType.Add(item.Key, item.Value);
+                else returnType.Add(item.Key, value);
             }
             return returnType;
         }
@@ -189,6 +201,27 @@ namespace SerializableMethods
             object value = Enum.Parse(type, _value);
 
             return (Enum)value;
+        }
+    }
+    public struct SerializedCollection
+    {
+        public List<object> elements;
+        public SerializedCollection(IEnumerator enumerator)
+        {
+            elements = new();
+            FillList(enumerator);
+        }
+        public SerializedCollection(IEnumerable enumerable)
+        {
+            elements = new();
+            FillList(enumerable.GetEnumerator());
+        }
+
+        private void FillList(IEnumerator enumerator)
+        {
+            enumerator.Reset();
+            while (enumerator.MoveNext())
+                elements.Add(enumerator.Current);
         }
     }
 }
