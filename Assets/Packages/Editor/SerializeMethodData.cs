@@ -6,6 +6,7 @@ using System.Runtime.Serialization.Json;
 using UnityEditor;
 using Object = UnityEngine.Object;
 using System.Collections;
+using System.Runtime.Serialization;
 
 namespace SerializableMethods
 {
@@ -21,12 +22,7 @@ namespace SerializableMethods
                 if (methodData == null)
                 {
                     try { methodData = Load(); }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"Error loading Data:\n\n{ex.Message}");
-                        DeleteSave();
-                        methodData = new();
-                    }
+                    catch { methodData = new(); }
                 }
                 return methodData;
             }
@@ -225,7 +221,7 @@ namespace SerializableMethods
         {
             enumerator.Reset();
             while (enumerator.MoveNext())
-                elements.Add(enumerator.Current as int? ?? 0);
+                elements.Add(enumerator.Current);
         }
     }
 }

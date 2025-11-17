@@ -16,8 +16,8 @@ public class SerializedList : ISerializedObject
     public VisualElement GetElement(string label, object value, Type type, Action<object> onValueChanged)
     {
         if (type.IsArray) return ArrayElement(label, value, type, onValueChanged);
-
-        return new Label("list implementation in progress");
+        else if(type.GenericTypeArguments.Length == 1) return  CollectionElement(label, value, type, onValueChanged);
+        return new Label($"Collection of type {type} not supported");
     }
 
     private VisualElement CreateListField(Type listFieldType, Type valueType, string label, Action<object> onValueChanged)
@@ -49,6 +49,17 @@ public class SerializedList : ISerializedObject
         return listField;
     }
 
+    private void AddListValues(Type listFieldType, object listField, object value, Type type)
+    {
+        var addMethod = listFieldType.GetMethod(nameof(ListField<BaseBoolField, bool>.AddElement));
+
+        //load values
+        var enumerator = GetEnumerator(value, type);
+        enumerator.Reset();
+        while (enumerator.MoveNext())
+            addMethod.Invoke(listField, new object[] { enumerator.Current });
+    }
+
     private IEnumerator GetEnumerator(object value, Type type)
     {
         if(value == null)
@@ -56,14 +67,6 @@ public class SerializedList : ISerializedObject
             //create enumerator instance
             ConstructorInfo constructor = type.GetConstructor(new Type[] { typeof(int) });
             if (constructor == null) return null;
-
-            //lists
-            if (constructor.IsGenericMethod)
-            {
-                Debug.Log("generic constructor");
-                return null;
-            }
-            //arrays
             var parameters = constructor.GetParameters();
             if(parameters.Length != 1 || parameters[0].ParameterType != typeof(int))
                 return null;
@@ -84,18 +87,28 @@ public class SerializedList : ISerializedObject
 
         var elementType = type.GetElementType();
         var baseElement = SerializeMethodHelper.GetElementFieldByType(elementType, label, default, _ => Debug.Log("Changed"));
-        Debug.Log($"{baseElement.GetType().Name} | {type.Name}");
         var listFieldType = typeof(ListField<,>).MakeGenericType(baseElement.GetType(), elementType);
         var addMethod = listFieldType.GetMethod(nameof(ListField<BaseBoolField, bool>.AddElement));
 
         //create instance
         var listField = CreateListField(listFieldType,elementType, label, onValueChanged);
-
         //load values
-        var enumerator = GetEnumerator(value, type);
-        enumerator.Reset();
-        while (enumerator.MoveNext())
-            addMethod.Invoke(listField, new object[] { enumerator.Current });
+        AddListValues(listFieldType, listField, value, type);
+
+        return listField;
+    }
+
+    private VisualElement CollectionElement(string label, object value, Type type, Action<object> onValueChanged)
+    {
+        var elementType = type.GenericTypeArguments[0];
+        var baseElement = SerializeMethodHelper.GetElementFieldByType(elementType, label, default, _ => Debug.Log("Changed"));
+        var listFieldType = typeof(ListField<,>).MakeGenericType(baseElement.GetType(), elementType);
+        var addMethod = listFieldType.GetMethod(nameof(ListField<BaseBoolField, bool>.AddElement));
+
+        //create instance
+        var listField = CreateListField(listFieldType, elementType, label, onValueChanged);
+        //load values
+        AddListValues(listFieldType, listField, value, type);
 
         return listField;
     }
