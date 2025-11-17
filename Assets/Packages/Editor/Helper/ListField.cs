@@ -65,12 +65,13 @@ public class ListField<T, TValue> : VisualElement where T : BaseField<TValue>
         float shiftAnimationTime = .05f;
 
         //somehow it is blocking input, fix later
-        return;
+        //return;
 
         element.RegisterCallback<PointerDownEvent>((evt) =>
         {
             if (interactable)
             {
+                if (element.field.Contains(evt.target as VisualElement)) return;
                 //setup values
                 totalArea = (element.localBound.height * (elementList.Count - 1)) + (element.localBound.height / 2f);
                 initialPosition = element.transform.position;
@@ -128,7 +129,6 @@ public class ListField<T, TValue> : VisualElement where T : BaseField<TValue>
 
                 containsElement = !containsElement;
             }
-
             element.SelectStyle(containsElement);
         });
 
