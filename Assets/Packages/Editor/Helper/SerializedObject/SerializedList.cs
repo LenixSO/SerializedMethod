@@ -101,7 +101,7 @@ public class SerializedList : ISerializedObject
         var baseElement = SerializeMethodHelper.GetElementFieldByType(elementType, label, default, _ => Debug.Log("Changed"));
         if (!(typeof(ListField<BaseBoolField, bool>).GenericTypeArguments[0].BaseType.
             GetGenericTypeDefinition().MakeGenericType(elementType)).IsAssignableFrom(baseElement.GetType()))
-            return new Label($"{baseElement.GetType()} invalid field element type");
+            return new Label($"{baseElement.GetType()} invalid field element type, element must inherit from BaseField");
         var listFieldType = typeof(ListField<,>).MakeGenericType(baseElement.GetType(), elementType);
         var addMethod = listFieldType.GetMethod(nameof(ListField<BaseBoolField, bool>.AddElement));
 
