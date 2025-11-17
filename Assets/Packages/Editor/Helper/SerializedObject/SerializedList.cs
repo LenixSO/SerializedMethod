@@ -1,10 +1,7 @@
 using SerializableMethods;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
-using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -102,6 +99,9 @@ public class SerializedList : ISerializedObject
     {
         var elementType = type.GenericTypeArguments[0];
         var baseElement = SerializeMethodHelper.GetElementFieldByType(elementType, label, default, _ => Debug.Log("Changed"));
+        if (!(typeof(ListField<BaseBoolField, bool>).GenericTypeArguments[0].BaseType.
+            GetGenericTypeDefinition().MakeGenericType(elementType)).IsAssignableFrom(baseElement.GetType()))
+            return new Label($"{baseElement.GetType()} invalid field element type");
         var listFieldType = typeof(ListField<,>).MakeGenericType(baseElement.GetType(), elementType);
         var addMethod = listFieldType.GetMethod(nameof(ListField<BaseBoolField, bool>.AddElement));
 
