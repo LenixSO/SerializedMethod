@@ -64,6 +64,9 @@ public class ListField<T, TValue> : VisualElement where T : BaseField<TValue>
         float shiftOffset = .75f;
         float shiftAnimationTime = .05f;
 
+        //somehow it is blocking input, fix later
+        return;
+
         element.RegisterCallback<PointerDownEvent>((evt) =>
         {
             if (interactable)
@@ -412,6 +415,14 @@ public class ListField<T, TValue> : VisualElement where T : BaseField<TValue>
     {
         if (id < 0 || id >= count) return null;
         return elementList[id].field;
+    }
+
+    public TValue[] GetValues()
+    {
+        TValue[] values = new TValue[count];
+        for (int i = 0; i < values.Length; i++)
+            values[i] = elementList[i].Value;
+        return values;
     }
 
     public void SetInteractable(bool value)
