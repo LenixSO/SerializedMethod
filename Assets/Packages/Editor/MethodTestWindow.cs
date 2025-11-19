@@ -30,8 +30,6 @@ namespace SerializableMethods
 
         public void CreateGUI()
         {
-            //data.DeleteSave();
-            //methodParameters.Clear();
             VisualElement root = rootVisualElement;
             int padding = 5;
             root.style.paddingTop = padding;

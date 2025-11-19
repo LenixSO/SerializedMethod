@@ -2,7 +2,7 @@ using System;
 
 namespace SerializableMethods
 {
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Method, Inherited = true)]
     public class SerializeMethod : Attribute
     {
     }
