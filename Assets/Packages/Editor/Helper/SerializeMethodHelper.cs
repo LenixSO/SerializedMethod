@@ -38,7 +38,7 @@ namespace SerializableMethods
         }
 
         public static MethodInfo[] GetMethods(Type targetClass,
-            BindingFlags flags = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            BindingFlags flags = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, bool includeInherited = true)
         {
             List<MethodInfo> methodList = new();
             Stack<Type> typeStack = GetInheritedTypes(targetClass, typeof(MonoBehaviour));
@@ -46,16 +46,22 @@ namespace SerializableMethods
             for (int i = 0; i < count; i++)
             {
                 targetClass = typeStack.Pop();
+                if (!includeInherited && i < count - 1) continue;
                 MethodInfo[] methods = targetClass.GetMethods(flags);
                 for (int u = 0; u < methods.Length; u++)
                 {
                     MethodInfo method = methods[u];
                     if (i < count - 1)
                     {
-                        if (method.IsPublic || method.GetCustomAttribute<SerializeMethod>() != null)
+                        if ((!method.IsPrivate) || method.GetCustomAttribute<SerializeMethod>() != null)
                             methodList.Add(method);
                     }
-                    else methodList.Add(method);
+                    else
+                    {
+                        int overrideId = methodList.IndexOf(method.GetBaseDefinition());
+                        if (overrideId < 0) methodList.Add(method);
+                        else methodList[overrideId] = method;
+                    }
                 }
             }
             return methodList.ToArray();

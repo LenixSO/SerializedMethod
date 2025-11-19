@@ -35,12 +35,15 @@ namespace SerializableMethods
                     root.Add(property);
                 }
             }
-            
+
+            SerializeClassMethods serializeClassMethods = target.GetType().GetCustomAttribute<SerializeClassMethods>();
+            bool hasClassAttribute = serializeClassMethods != null;
+            serializeClassMethods ??= new SerializeClassMethods(includeInherited: true);
             //Place methods
-            MethodInfo[] methods = SerializeMethodHelper.GetMethods(target.GetType());
+            MethodInfo[] methods = SerializeMethodHelper.GetMethods(target.GetType(), serializeClassMethods.GetBindingFlags(), serializeClassMethods.includeInherited);
             foreach (MethodInfo method in methods)
             {
-                if (method.GetCustomAttribute<SerializeMethod>() != null)
+                if (method.GetCustomAttribute<SerializeMethod>() != null || hasClassAttribute)
                 {
                     MonoBehaviour mono = (MonoBehaviour)target;
                     SerializeMethodHelper.ShowMethod(mono.gameObject, method, root);
