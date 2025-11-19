@@ -32,6 +32,7 @@ namespace SerializableMethods
             {
                 var field = properties[i];
                 if (!field.CanWrite) continue;
+                if (field.GetMethod.GetParameters().Length > 0 || field.SetMethod.GetParameters().Length > 1) continue;
                 foldout.Add(SerializeMethodHelper.GetElementFieldByType(field.PropertyType, field.Name, field.GetValue(value), fieldValue =>
                 {
                     field.SetValue(value, fieldValue);
@@ -58,7 +59,8 @@ namespace SerializableMethods
             if (constructor == null || param is { Length: 0 }) return Activator.CreateInstance(type);
 
             object[] paramValues = new object[param.Length];
-            for (int i = 0; i < param.Length; i++) paramValues[i] = param[i].RawDefaultValue;
+            for (int i = 0; i < param.Length; i++)
+                paramValues[i] = param[i].ParameterType.IsValueType ? Activator.CreateInstance(param[i].ParameterType) : default;
             return constructor.Invoke(paramValues);
         }
     }
