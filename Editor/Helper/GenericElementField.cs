@@ -59,7 +59,7 @@ namespace SerializableMethods
 
             object[] paramValues = new object[param.Length];
             for (int i = 0; i < param.Length; i++) paramValues[i] = param[i].RawDefaultValue;
-            return constructor.Invoke(param);
+            return constructor.Invoke(paramValues);
         }
     }
 }
