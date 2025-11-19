@@ -21,6 +21,7 @@ namespace SerializableMethods
             }
         }
 
+        private static ISerializedObject genericTypeObject;
         private static Dictionary<Type, ISerializedObject> knownTypes;
 
         public static Dictionary<Type, ISerializedObject> KnownTypes
@@ -71,7 +72,7 @@ namespace SerializableMethods
         public static string ParameterKey(MethodInfo method, ParameterInfo parameter) =>
             $"{MethodKey(method)} - {parameter.Name}";
 
-        static SerializeMethodData data = new();
+        private static SerializeMethodData data = new();
 
         public static Dictionary<string, object> methodParameters => data.methodParameters;
 
@@ -197,7 +198,8 @@ namespace SerializableMethods
                         return KnownTypes[t].GetElement(label, value, type, onChange);
                     }
                 }
-                return new Label($"{type} is an unsupported type");
+                genericTypeObject ??= new GenericElementField();
+                return genericTypeObject.GetElement(label, value, type, onChange);
             }
 
             //Debug.Log(KnownTypes[type]);
