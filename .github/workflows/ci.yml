@@ -2,8 +2,7 @@ name: CI
 on:
   push:
     branches:
-      # workflow for this repository, will be feat/* -> develop -> release ( for example )
-    - release
+    - master
 
 permissions: 
   contents: write
@@ -19,6 +18,6 @@ jobs:
         fetch-depth: 0
     - uses: NoTaskStudios/upmizer@v1
       with:
-        package_root: "Assets/MyPackage"
+        package_root: "Assets/Package"
         upm_branch: "master"
         github_token: ${{ secrets.GITHUB_TOKEN }}
