@@ -4,20 +4,27 @@ using UnityEngine;
 using SerializableMethods;
 using System;
 
+[SerializeClassMethods(MethodType.NotPublic)]
 public class TestF : MonoBehaviour
 {
     int deptht = 0;
-    [SerializeMethod]
     private void TestListInt(List<bool> list)
     {
     }
-    [SerializeMethod]
     private void TestArrayInt(int[] array)
     {
     }
-    [SerializeMethod]
     private void TestStackInt(Queue<string> list)
     {
+    }
+
+    public void TestPublic()
+    {
+
+    }
+    private void TestPrivate()
+    {
+
     }
 
     //private bool CheckForInterface(Type type, Type interfaceType)

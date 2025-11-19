@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using SerializableMethods;
 
+[SerializeClassMethods(MethodType.NotPublic, true)]
 public class TestE : TestA
 {
     public string text;
