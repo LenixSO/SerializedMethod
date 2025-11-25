@@ -10,12 +10,28 @@ public class TestF : MonoBehaviour
     int deptht = 0;
     private void TestListInt(List<bool> list)
     {
+        Debug.Log($"list: {list.Count}");
+        for (int i = 0; i < list.Count; i++)
+        {
+            Debug.Log($"{i} => {list[i]}");
+        }
     }
     private void TestArrayInt(int[] array)
     {
+        Debug.Log($"array: {array.Length}");
+        for (int i = 0; i < array.Length; i++)
+        {
+            Debug.Log($"{i} => {array[i]}");
+        }
     }
-    private void TestStackInt(Queue<string> list)
+    
+    private void TestStackInt(Stack<string> list)
     {
+        Debug.Log($"stack: {list.Count}");
+        for (int i = 0; i < list.Count; i++)
+        {
+            Debug.Log($"{i} => {list.Pop()}");
+        }
     }
 
     public void TestPublic()
