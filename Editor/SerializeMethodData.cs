@@ -6,6 +6,7 @@ using System.Runtime.Serialization.Json;
 using UnityEditor;
 using Object = UnityEngine.Object;
 using System.Collections;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace SerializableMethods
@@ -61,7 +62,7 @@ namespace SerializableMethods
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"Error loading data:\n\n{ex.Message}");
+                    Debug.LogError($"Error loading data:\n\n({ex.GetType().Name}){ex.Message}");
                     file.Close();
                     DeleteSave();
                 }
@@ -99,7 +100,7 @@ namespace SerializableMethods
                         }
                         if (value is SerializedCollection)
                         {
-                            value = ((SerializedCollection)value).elements;
+                            value = ((SerializedCollection)value).GetCollection();
                         }
                         returnData.Add(item.Key, value);
                         //Debug.Log($"L - {item.Key}({item.Value.GetType()}) value: {returnData[item.Key]}");
@@ -205,14 +206,17 @@ namespace SerializableMethods
     }
     public struct SerializedCollection
     {
+        public string typeName;
         public List<object> elements;
         public SerializedCollection(IEnumerator enumerator)
         {
+            typeName = enumerator.GetType().AssemblyQualifiedName;
             elements = new();
             FillList(enumerator);
         }
         public SerializedCollection(IEnumerable enumerable)
         {
+            typeName = enumerable.GetType().AssemblyQualifiedName;
             elements = new();
             FillList(enumerable.GetEnumerator());
         }
@@ -222,6 +226,36 @@ namespace SerializableMethods
             enumerator.Reset();
             while (enumerator.MoveNext())
                 elements.Add(enumerator.Current);
+        }
+
+        public object GetCollection()
+        {
+            Type collectionType = Type.GetType(typeName);
+            if (collectionType.IsArray) return ParseArray(collectionType);
+            return ParseCollection(collectionType);
+        }
+
+        private object ParseArray(Type type)
+        {
+            var elementType = type.GetElementType();
+            var parseMethod = typeof(Enumerable).GetMethod(nameof(Enumerable.Cast)).MakeGenericMethod(elementType);
+            var array = parseMethod.Invoke(null, new object[] { elements.ToArray() });
+            return (array as IEnumerable).GetEnumerator();
+        }
+
+        private object ParseCollection(Type type)
+        {
+            var elementType = type.GenericTypeArguments[0];
+            var parseMethod = typeof(Enumerable).GetMethod(nameof(Enumerable.Cast)).MakeGenericMethod(elementType);
+            var collectionConstructor = type.GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(elementType) });
+            if (collectionConstructor == null)
+            {
+                Debug.LogWarning("Couldn't find an appropriate constructor to parse value");
+                return null;
+            }
+            
+            var collection = collectionConstructor.Invoke(new[] { parseMethod.Invoke(null, new object[] { elements }) });
+            return collection;
         }
     }
 }
