@@ -34,7 +34,9 @@ namespace SerializableMethods
             new()
             {
                 typeof(List<object>),
+                typeof(SerializedEnum),
                 typeof(SerializedCollection),
+                typeof(ObjectID),
             };
 
         public SerializeMethodData()
