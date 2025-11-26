@@ -1,6 +1,8 @@
 using SerializableMethods;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -37,10 +39,7 @@ public class SerializedList : ISerializedObject
         var callbackMethod = baseMethod.MakeGenericMethod(new Type[] { eventType });
         //EventCallback<object> callback = _ => Debug.Log("value changed");
         EventCallback<object> callback = _ =>
-        {
-            var raw = getValuesMethod.Invoke(listField, new object[] { });
-            onValueChanged?.Invoke(raw);
-        };
+            onValueChanged?.Invoke(getValuesMethod.Invoke(listField, new object[] { }));
         callbackMethod.Invoke(listField, new object[] { callback, TrickleDown.NoTrickleDown });
 
         return listField;
@@ -52,7 +51,6 @@ public class SerializedList : ISerializedObject
 
         //load values
         var enumerator = GetEnumerator(value, type);
-        enumerator.Reset();
         while (enumerator.MoveNext())
             addMethod.Invoke(listField, new object[] { enumerator.Current });
     }
@@ -70,8 +68,8 @@ public class SerializedList : ISerializedObject
             value = constructor.Invoke(new object[] { 1 });
         }
         IEnumerator enumerator = value as IEnumerator;
-        if(enumerator == null && value is IEnumerable) 
-            enumerator = (value as IEnumerable).GetEnumerator();
+        if(enumerator == null && value is IEnumerable enumerable) 
+            enumerator = enumerable.GetEnumerator();
 
         return enumerator;
     }
@@ -85,14 +83,15 @@ public class SerializedList : ISerializedObject
         var elementType = type.GetElementType();
         var baseElement = SerializeMethodHelper.GetElementFieldByType(elementType, label, default, _ => Debug.Log("Changed"));
         var listFieldType = typeof(ListField<,>).MakeGenericType(baseElement.GetType(), elementType);
-        var addMethod = listFieldType.GetMethod(nameof(ListField<BaseBoolField, bool>.AddElement));
 
         //create instance
-        var listField = CreateListField(listFieldType,elementType, label, onValueChanged);
+        var listField = CreateListField(listFieldType,elementType, label, ParseToArray);
         //load values
         AddListValues(listFieldType, listField, value, type);
 
         return listField;
+
+        void ParseToArray(object value) => onValueChanged?.Invoke(value);
     }
 
     private VisualElement CollectionElement(string label, object value, Type type, Action<object> onValueChanged)
@@ -103,13 +102,25 @@ public class SerializedList : ISerializedObject
             GetGenericTypeDefinition().MakeGenericType(elementType)).IsAssignableFrom(baseElement.GetType()))
             return new Label($"{baseElement.GetType()} invalid field element type, element must inherit from BaseField");
         var listFieldType = typeof(ListField<,>).MakeGenericType(baseElement.GetType(), elementType);
-        var addMethod = listFieldType.GetMethod(nameof(ListField<BaseBoolField, bool>.AddElement));
+        var collectionConstructor = type.GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(elementType) });
+        var parseMethod = typeof(Enumerable).GetMethod(nameof(Enumerable.Cast)).MakeGenericMethod(elementType);
 
         //create instance
-        var listField = CreateListField(listFieldType, elementType, label, onValueChanged);
+        var listField = CreateListField(listFieldType, elementType, label, ParseToCollection);
         //load values
         AddListValues(listFieldType, listField, value, type);
 
         return listField;
+        void ParseToCollection(object newValue)
+        {
+            if (collectionConstructor == null)
+            {
+                Debug.LogWarning("Couldn't find an appropriate constructor to parse value");
+                return;
+            }
+            var enumerable = newValue as IEnumerable;
+            onValueChanged?.Invoke(
+                collectionConstructor.Invoke(new[] { parseMethod.Invoke(null, new object[] { enumerable }) }));
+        }
     }
 }
