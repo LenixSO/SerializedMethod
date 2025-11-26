@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/LenixSO/SerializedMethod/compare/v1.0.0...v1.0.1) (2025-11-26)
+
+
+### Bug Fixes
+
+* collection data save ([b46096f](https://github.com/LenixSO/SerializedMethod/commit/b46096ffe548bef9732d5b5acd82bc4b99109941))
+
 # 1.0.0 (2025-11-19)
 
 
