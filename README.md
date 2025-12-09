@@ -1,7 +1,7 @@
 # Serialized Method
 A package for serializing class methods in unity editor.
 # Instalation
-You can install this package via Unity package manager, using the git link: https://github.com/LenixSO/SerializedMethod/#ump
+You can install this package via Unity package manager, using the git link: https://github.com/LenixSO/SerializedMethod/#upm
 # SerializeMethod Attribute
 By adding the **SerializedMethod** attribute to a method in a MonoBehaviour class, a button to call that method will appear in the inspector of that class.
 
